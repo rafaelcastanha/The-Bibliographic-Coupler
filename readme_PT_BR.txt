@@ -3,4 +3,4 @@
 3) O nome padrão da base de dados é "Org.txt"
 4) Renomeie sua base de dados para "Org" ou altere o código em "corpus" para o nome de sua preferencia
 5) Copie e cole "The Bibliographic Coupler" no R
-6) Excute "referências", "ABA" e "Freq_ABA" 
+6) Excute "references", "ABA" e "Freq_ABA" 
