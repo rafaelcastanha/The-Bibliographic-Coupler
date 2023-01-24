@@ -132,7 +132,7 @@ mtx_cit<-tibble::rownames_to_column(mtx_cit, " ")
 #Coupling = coupling units
 #Freq_Coupling = Coupling frequency and normalizations
 #plot(network_ABA) = coupling network without normalizations
-#plot(network_ABA, edge.width=c(net_list$ABA)) = coupling network with ABA's edge
+#plot(network_ABA, edge.width=c(net_list$ABA)) = coupling network with Coupling's edge
 #plot(network_ABA, edge.width=c(net_list$Saltons_Cosine)) = coupling network with Salton's Cosine's edge
 #plot(network_ABA, edge.width=c(net_list$Jaccard_Index)) = coupling network with Jaccard Index's edge
 #mtx_adj = Coupling Matrix
