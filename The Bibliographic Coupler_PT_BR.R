@@ -18,7 +18,7 @@ library(dplyr)
 library(RVenn)
 library("igraph")
 
-#Arquivo
+#file choose
 
 corpus<-read.table(file.choose(), header = FALSE, sep = "\t", quote="\"")
 
@@ -27,11 +27,11 @@ corpus<-corpus[(-1),]
 hd<-gsub("\\.$","",names(corpus))
 colnames(corpus)<-hd
 
-#Corpus para dataframe
+#Corpus to dataframe
 
 corpus<-as.data.frame(corpus)
 
-#remover espaços e vazios
+#remover blank spaces
 
 corpus<-corpus
 corpus[corpus==""|corpus==" "|corpus=="   "]<-NA
@@ -39,7 +39,7 @@ corpus[corpus==""|corpus==" "|corpus=="   "]<-NA
 empty_columns<-sapply(corpus, function(x) all(is.na(x)|x==""))
 corpus<-corpus[,!empty_columns]
 
-#Contagem de itens citados por lista
+#item per list
 
 citados<-function(x){return(length(which(!is.na(x))))}
 itens_citados<-apply(X=corpus,FUN=citados,MARGIN=c(1,2))
@@ -51,51 +51,49 @@ colnames(df2)[1]<-"units"
 colnames(df2)[2]<-"refs"
 references<-df2
 
-#Transformação em objeto Venn
+#Corpus to Venn object
 
 corpus_aba<-Venn(corpus)
 
-#Intersecção Pareada: identificação das unidades de acoplamento)
+#Coupling units
 
 ABA<-overlap_pairs(corpus_aba)
+Coupling<-ABA
 
 #Unidades por acoplamento
 
 stack(ABA)
 
-#Intensidades de ABA
+#Coupling frequency
 
 df<-as.data.frame(table(stack(ABA)))
 int_aba<-aggregate(Freq ~ ind, data = df, FUN = sum)
-Freq_ABA<-data.frame(do.call("rbind",strsplit(gsub("....", "...",as.character(int_aba$ind), fixed=TRUE),"...",fixed=TRUE)))
-Freq_ABA["ABA"]<-int_aba$Freq
+Freq_Coupling<-data.frame(do.call("rbind",strsplit(gsub("....", "...",as.character(int_aba$ind), fixed=TRUE),"...",fixed=TRUE)))
+Freq_Coupling["Coupling"]<-int_aba$Freq
 
-m2=merge(Freq_ABA,df2,by.x="X2",by.y="units",all.x=TRUE)
+m2=merge(Freq_Coupling,df2,by.x="X2",by.y="units",all.x=TRUE)
 m1=merge(m2,df2,by.x="X1",by.y="units",all.x=TRUE)
 colnames(m1)[4]<-"refs_X2"
 colnames(m1)[5]<-"refs_X1"
-Freq_ABA<-m1 %>% select(X1,X2,"refs_X1","refs_X2","ABA")
+Freq_Coupling<-m1 %>% select(X1,X2,"refs_X1","refs_X2","Coupling")
 
-#Normalizações 
+#Normalizations
 
 novacoluna<-c("Saltons_Cosine")
-Freq_ABA[,novacoluna]<-Freq_ABA$ABA/sqrt(Freq_ABA$refs_X1*Freq_ABA$refs_X2)
+Freq_Coupling[,novacoluna]<-Freq_Coupling$Coupling/sqrt(Freq_Coupling$refs_X1*Freq_Coupling$refs_X2)
 novacoluna_2<-c("Jaccard_Index")
-Freq_ABA[,novacoluna_2]<-Freq_ABA$ABA/(Freq_ABA$refs_X1+Freq_ABA$refs_X2-Freq_ABA$ABA)
+Freq_Coupling[,novacoluna_2]<-Freq_Coupling$Coupling/(Freq_Coupling$refs_X1+Freq_Coupling$refs_X2-Freq_Coupling$Coupling)
 
-#Rede de acoplamento bibliográfico
+#Coupling Network
 
-net_list<-filter(Freq_ABA, ABA>0)
+net_list<-filter(Freq_Coupling, Coupling>0)
 links<-data.frame(source=c(net_list$X1), target=c(net_list$X2))
 network_ABA<-graph_from_data_frame(d=links, directed=F)
-plot_ABA<-plot(network_ABA, edge.width=c(net_list$ABA))
-plot_Salton<-plot(network_ABA, edge.width=c(net_list$Saltons_Cosine))
-plot_Jaccard<-plot(network_ABA, edge.width=c(net_list$Jaccard_Index))
 
- #Matrizes Adjacencia
+ #Matrix
       
 
-      #Matriz Acoplamento
+      #Coupling Matrix
       
       mtx<-as_adjacency_matrix(network_ABA)
       E(network_ABA)$weight<-net_list$Coupling
@@ -105,13 +103,14 @@ plot_Jaccard<-plot(network_ABA, edge.width=c(net_list$Jaccard_Index))
       
       dt<-stack(corpus)
       dt2<-table(dt$values[row(dt[-1])], unlist(dt[-1]))
-      mtx_cit<-t(dt2)
+      
+	mtx_cit<-t(dt2)
       mtx_cocit<-(t(mtx_cit) %*% mtx_cit)
       mtx_cocit<-as.table(mtx_cocit)
       
-      #Matriz Cocitação
+      #Co-citation Matrix
 
-#mtx cit
+#Citation Matrix
 
 mtx_cit<-as.data.frame.matrix(mtx_cit)
 mtx_cit<-tibble::rownames_to_column(mtx_cit, " ")
@@ -124,21 +123,21 @@ mtx_cit<-tibble::rownames_to_column(mtx_cit, " ")
       mtx_adj_cocit<-as_adjacency_matrix(network_cocit, attr="weight")
       mtx_adj_cocit_df<-as.data.frame(as.matrix(mtx_adj_cocit))
       mtx_adj_cocit_df<-tibble::rownames_to_column(mtx_adj_cocit_df, " ")
-mtx_cct<-mtx_adj_cocit_df
+	mtx_cct<-mtx_adj_cocit_df
       
 
-#Comandos
+#Comandoss
 
-#corpus = visualiza todo corpus analisado
-#references = número de referencia por lista
-#ABA = unidades de acoplamento
-#Freq_ABA = Intensidade de acoplamento por intersecção e normalizações por Coseno de Salton e Índice de Jaccard
-#plot(network_ABA) = visualiza a rede de acoplamento bibliográfico sem valoração das arestas
-#plot_ABA<-plot(network_ABA, edge.width=c(net_list$ABA)) = visualiza a rede de acoplamento bibliográfico com a valoração das arestas via valores de ABA
-#plot_ABA<-plot(network_ABA, edge.width=c(net_list$Saltons_Cosine)) = visualiza a rede de acoplamento bibliográfico com a valoração das arestas via valores de normalização por Cosseno de Salton
-#plot_ABA<-plot(network_ABA, edge.width=c(net_list$Jaccard_Index)) = visualiza a rede de acoplamento bibliográfico com a valoração das arestas via valores de normalização por Índice de Jaccard
-#mtx_adj = Matriz (adjacencia) de acoplamento ponderada
-#mtx_cit = Matriz de citação (booleana)
+#corpus = arquivo a ser processado
+#references = tamanhos das listas de referências
+#Coupling = unidades de acoplamento
+#Freq_Coupling = Frequencias de acoplamento e respectivas normalizações
+#plot(network_ABA) = rede de acoplamento sem valoração das arestas
+#plot(network_ABA, edge.width=c(net_list$ABA)) = rede de acoplamento com arestas valoradas por "Coupling"
+#plot(network_ABA, edge.width=c(net_list$Saltons_Cosine)) = rede de acoplamento com arestas valoradas pelo Cosseno de Salton
+#plot(network_ABA, edge.width=c(net_list$Jaccard_Index)) = rede de acoplamento com arestas valoradas pelo Indice de Jaccard
+#mtx_adj = Matriz de acoplamento
+#mtx_cit = Matriz de citação
 #mtx_cct = Matriz de cocitação
-                     
+
 }
