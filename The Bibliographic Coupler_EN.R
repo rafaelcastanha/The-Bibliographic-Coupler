@@ -107,14 +107,13 @@ network_ABA<-graph_from_data_frame(d=links, directed=F)
       mtx_cocit<-(t(mtx_cit) %*% mtx_cit)
       mtx_cocit<-as.table(mtx_cocit)
       
-      #Co-citation Matrix
+	#Citation Matrix
 
-#Citation Matrix
+	mtx_cit<-as.data.frame.matrix(mtx_cit)
+	mtx_cit<-tibble::rownames_to_column(mtx_cit, " ")
 
-mtx_cit<-as.data.frame.matrix(mtx_cit)
-mtx_cit<-tibble::rownames_to_column(mtx_cit, " ")
-
-      
+        #Co-citation Matrix
+		      
       mtx_cocit_df<-as.data.frame(mtx_cocit)
       links_cocit<-data.frame(source=c(mtx_cocit_df$Var1), target=c(mtx_cocit_df$Var2))
       network_cocit<-graph_from_data_frame(d=links_cocit, directed=T)
