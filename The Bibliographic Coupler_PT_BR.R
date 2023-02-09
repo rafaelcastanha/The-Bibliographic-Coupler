@@ -18,7 +18,7 @@ library(dplyr)
 library(RVenn)
 library("igraph")
 
-#file choose
+#Escolher o arquivo
 
 corpus<-read.table(file.choose(), header = FALSE, sep = "\t", quote="\"")
 
@@ -31,7 +31,7 @@ colnames(corpus)<-hd
 
 corpus<-as.data.frame(corpus)
 
-#remover blank spaces
+#remover espaços vazios
 
 corpus<-corpus
 corpus[corpus==""|corpus==" "|corpus=="   "]<-NA
@@ -39,7 +39,7 @@ corpus[corpus==""|corpus==" "|corpus=="   "]<-NA
 empty_columns<-sapply(corpus, function(x) all(is.na(x)|x==""))
 corpus<-corpus[,!empty_columns]
 
-#item per list
+#item por lista
 
 citados<-function(x){return(length(which(!is.na(x))))}
 itens_citados<-apply(X=corpus,FUN=citados,MARGIN=c(1,2))
@@ -55,7 +55,7 @@ references<-df2
 
 corpus_aba<-Venn(corpus)
 
-#Coupling units
+#Unidades de acoplamento
 
 ABA<-overlap_pairs(corpus_aba)
 Coupling<-ABA
@@ -64,7 +64,7 @@ Coupling<-ABA
 
 stack(ABA)
 
-#Coupling frequency
+#Frequencia de acoplamento
 
 df<-as.data.frame(table(stack(ABA)))
 int_aba<-aggregate(Freq ~ ind, data = df, FUN = sum)
@@ -77,23 +77,23 @@ colnames(m1)[4]<-"refs_X2"
 colnames(m1)[5]<-"refs_X1"
 Freq_Coupling<-m1 %>% select(X1,X2,"refs_X1","refs_X2","Coupling")
 
-#Normalizations
+#Normalizações
 
 novacoluna<-c("Saltons_Cosine")
 Freq_Coupling[,novacoluna]<-Freq_Coupling$Coupling/sqrt(Freq_Coupling$refs_X1*Freq_Coupling$refs_X2)
 novacoluna_2<-c("Jaccard_Index")
 Freq_Coupling[,novacoluna_2]<-Freq_Coupling$Coupling/(Freq_Coupling$refs_X1+Freq_Coupling$refs_X2-Freq_Coupling$Coupling)
 
-#Coupling Network
+#Rede de acoplamento
 
 net_list<-filter(Freq_Coupling, Coupling>0)
 links<-data.frame(source=c(net_list$X1), target=c(net_list$X2))
 network_ABA<-graph_from_data_frame(d=links, directed=F)
 
- #Matrix
+ #Matrizes
       
 
-      #Coupling Matrix
+      #Matriz de acoplamento
       
       mtx<-as_adjacency_matrix(network_ABA)
       E(network_ABA)$weight<-net_list$Coupling
@@ -108,13 +108,14 @@ network_ABA<-graph_from_data_frame(d=links, directed=F)
       mtx_cocit<-(t(mtx_cit) %*% mtx_cit)
       mtx_cocit<-as.table(mtx_cocit)
       
-      #Co-citation Matrix
+     
 
-#Citation Matrix
+	#Matriz de citação
 
-mtx_cit<-as.data.frame.matrix(mtx_cit)
-mtx_cit<-tibble::rownames_to_column(mtx_cit, " ")
+	mtx_cit<-as.data.frame.matrix(mtx_cit)
+	mtx_cit<-tibble::rownames_to_column(mtx_cit, " ")
 
+	#MAtriz de cocitação
       
       mtx_cocit_df<-as.data.frame(mtx_cocit)
       links_cocit<-data.frame(source=c(mtx_cocit_df$Var1), target=c(mtx_cocit_df$Var2))
